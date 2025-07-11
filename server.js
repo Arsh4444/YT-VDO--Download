@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('ytdl-core');
+const play = require('play-dl');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,22 +14,20 @@ app.get('/download', async (req, res) => {
             return res.status(400).json({ error: 'Missing URL parameter' });
         }
 
-        console.log("Received download request for:", videoURL);
+        console.log("Fetching video:", videoURL);
 
-        const info = await ytdl.getInfo(videoURL);
-        console.log("Video info fetched:", info.videoDetails.title);
+        // Get stream using play-dl
+        const stream = await play.stream(videoURL);
+        const fileName = 'video.mp4';
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'video/mp4');
 
-        const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
-        console.log("Format chosen:", format.qualityLabel);
-
-        res.header('Content-Disposition', `attachment; filename="video.mp4"`);
-        ytdl(videoURL, { format: format }).pipe(res);
+        stream.stream.pipe(res);
     } catch (error) {
         console.error("Download error:", error);
         res.status(500).json({ error: error.message || 'Failed to download video' });
     }
 });
-
 
 app.get('/', (req, res) => {
     res.send('YT Downloader Backend is running!');
