@@ -21,17 +21,15 @@ app.get("/download", (req, res) => {
 
     const fileName = `video_${Date.now()}.mp4`;
 
-    const ytdlp = spawn("yt-dlp", [
+   const ytdlp = spawn("yt-dlp", [
     "--verbose",
     "--no-check-certificate",
     "--restrict-filenames",
     "--cookies", "cookies.txt",
     "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-    "-f", "best",
     "-o", fileName,
     videoURL
 ]);
-
 
     ytdlp.stdout.on("data", (data) => {
         console.log(`stdout: ${data}`);
