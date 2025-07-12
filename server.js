@@ -3,7 +3,7 @@ const cors = require("cors");
 const { spawn } = require("child_process");
 const fs = require("fs");
 
-process.chdir("/tmp"); // Ensure safe writable directory on Railway
+process.chdir("/tmp"); // Safe writable dir on Railway
 
 const app = express();
 app.use(cors());
@@ -24,9 +24,10 @@ app.get("/download", (req, res) => {
 
     const fileName = `video_${Date.now()}.mp4`;
 
-    // Use yt-dlp with cookies for CAPTCHA/age bypass
     const ytdlp = spawn("yt-dlp", [
+        "--verbose", // for clear Railway logs
         "--cookies", "cookies.txt",
+        "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
         "-o", fileName,
         videoURL
     ]);
@@ -48,7 +49,7 @@ app.get("/download", (req, res) => {
                     console.error(`File send error: ${err.message}`);
                     res.status(500).json({ error: `File send error: ${err.message}` });
                 }
-                // Clean up file after sending
+                // Clean up after sending
                 fs.unlink(fileName, () => {});
             });
         } else {
@@ -61,5 +62,5 @@ app.get("/download", (req, res) => {
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`✅ Server is running on port ${PORT}`);
 });
