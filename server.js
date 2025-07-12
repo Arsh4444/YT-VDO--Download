@@ -1,57 +1,48 @@
-const express = require('express');
-const cors = require('cors');
-const { exec } = require('child_process');
-const fs = require('fs');
+const express = require("express");
+const cors = require("cors");
+const { exec } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 
-app.get('/download', async (req, res) => {
-    try {
-        const videoURL = req.query.url;
-        if (!videoURL) {
-            return res.status(400).json({ error: 'Missing URL parameter' });
-        }
+app.get("/", (req, res) => {
+    res.send("YouTube Downloader Backend is Running ✅");
+});
 
-        console.log("Downloading video:", videoURL);
-
-        const outputFile = 'video.mp4';
-
-        // Remove previous file if exists
-        if (fs.existsSync(outputFile)) {
-            fs.unlinkSync(outputFile);
-        }
-
-        const command = `yt-dlp -f best -o ${outputFile} "${videoURL}"`;
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Download error:", error);
-                return res.status(500).json({ error: stderr || 'Failed to download video' });
-            }
-            console.log("Download complete. Sending file...");
-            res.download(outputFile, 'video.mp4', (err) => {
-                if (err) {
-                    console.error("Error sending file:", err);
-                }
-                // Optionally delete file after sending
-                if (fs.existsSync(outputFile)) {
-                    fs.unlinkSync(outputFile);
-                }
-            });
-        });
-
-    } catch (error) {
-        console.error("Server error:", error);
-        res.status(500).json({ error: error.message || 'Server error' });
+app.get("/download", (req, res) => {
+    const videoURL = req.query.url;
+    if (!videoURL) {
+        return res.status(400).json({ error: "Missing URL" });
     }
+
+    const fileName = `video_${Date.now()}.mp4`;
+    const outputFile = path.join(__dirname, fileName);
+
+    // This line uses yt-dlp with your cookies.txt to bypass login/CAPTCHA
+    const command = `yt-dlp --cookies cookies.txt -o "${outputFile}" "${videoURL}"`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Download error: ${error.message}`);
+            return res.status(500).json({ error: error.message });
+        }
+        if (stderr) {
+            console.error(`yt-dlp stderr: ${stderr}`);
+        }
+        console.log(`yt-dlp stdout: ${stdout}`);
+
+        res.download(outputFile, fileName, (err) => {
+            if (err) {
+                console.error(`File send error: ${err.message}`);
+            }
+            fs.unlink(outputFile, () => {}); // Clean up downloaded file after sending
+        });
+    });
 });
 
-app.get('/', (req, res) => {
-    res.send('YT Downloader Backend using yt-dlp is running!');
-});
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
