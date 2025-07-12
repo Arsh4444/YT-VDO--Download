@@ -15,19 +15,19 @@ app.get("/", (req, res) => {
 app.get("/download", (req, res) => {
     const videoURL = req.query.url;
 
-    // Validate URL
     if (!videoURL || !videoURL.startsWith("http")) {
-        return res.status(400).json({
-            error: "Missing or invalid URL. Use /download?url=VIDEO_URL"
-        });
+        return res.status(400).json({ error: "Missing or invalid URL. Use /download?url=VIDEO_URL" });
     }
 
     const fileName = `video_${Date.now()}.mp4`;
 
     const ytdlp = spawn("yt-dlp", [
-        "--verbose", // for clear Railway logs
+        "--verbose",
+        "--no-check-certificate",
+        "--restrict-filenames",
         "--cookies", "cookies.txt",
         "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "-f", "best",
         "-o", fileName,
         videoURL
     ]);
@@ -49,13 +49,10 @@ app.get("/download", (req, res) => {
                     console.error(`File send error: ${err.message}`);
                     res.status(500).json({ error: `File send error: ${err.message}` });
                 }
-                // Clean up after sending
                 fs.unlink(fileName, () => {});
             });
         } else {
-            res.status(500).json({
-                error: `yt-dlp exited with code ${code}. Check Railway logs for details.`
-            });
+            res.status(500).json({ error: `yt-dlp exited with code ${code}. Check Railway logs for details.` });
         }
     });
 });
