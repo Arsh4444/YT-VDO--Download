@@ -3,7 +3,7 @@ const cors = require("cors");
 const { spawn } = require("child_process");
 const fs = require("fs");
 
-process.chdir("/tmp"); // Safe writable dir on Railway
+process.chdir("/tmp"); // Use Railway writable dir
 
 const app = express();
 app.use(cors());
@@ -27,7 +27,6 @@ app.get("/download", (req, res) => {
         "--restrict-filenames",
         "--cookies", "cookies.txt",
         "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "-f", "best",
         "-o", fileName,
         videoURL
     ]);
